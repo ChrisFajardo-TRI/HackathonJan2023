@@ -2,6 +2,10 @@ Screen {
     background: $surface-darken-1;
 }
 
+#data-container {
+    height: 33%
+}
+
 #tree-view {
     display: none;
     scrollbar-gutter: stable;
@@ -18,4 +22,14 @@ CsvPlotter.-show-tree #tree-view {
 
 DataTable {
     width: auto;
+}
+
+AutoComplete {
+    height: auto;
+    width: 100%;
+    align-horizontal: center;
+}
+
+Dropdown {
+    width: 100%;
 }

@@ -13,7 +13,8 @@ from textual import events
 from textual.app import App, ComposeResult
 from textual.containers import Container
 from textual.reactive import var
-from textual.widgets import DataTable, DirectoryTree, Footer, Header
+from textual.widgets import Button, DataTable, DirectoryTree, Footer, Header, Input, Static
+from textual_autocomplete import AutoComplete, Dropdown, DropdownItem
 
 
 class CsvPlotter(App):
@@ -47,8 +48,11 @@ class CsvPlotter(App):
         for row in self.df.itertuples(index=False):
             data_table.add_row(*[str(x) for x in row])
 
-    def watch_loading(self, loading: bool):
-        self.query_one("#progress-bar").set_class(loading, "-show-loading")
+        for i in ["#input-x", "#input-y"]:
+            input_widget: Input = self.query_one(i)
+            input_widget.value = ""
+            input_dropdown: Dropdown = self.query_one(f"{i}-dropdown")
+            input_dropdown.items = [DropdownItem(col.label.plain) for col in data_table.columns]
 
     def compose(self) -> ComposeResult:
         """Compose our UI."""
@@ -56,7 +60,23 @@ class CsvPlotter(App):
         yield Header()
         yield Container(
             DirectoryTree(path, id="tree-view"),
-            DataTable()
+            DataTable(),
+            id="data-container"
+        )
+        yield Container(
+            Container(
+                AutoComplete(
+                    Input(placeholder="X axis", id="input-x"),
+                    Dropdown(items=[], id="input-x-dropdown")
+                ),
+                AutoComplete(
+                    Input(placeholder="Y axis", id="input-y"),
+                    Dropdown(items=[], id="input-y-dropdown")
+                ),
+                Button("Plot!", id="button-plot", variant="primary")
+            ),
+            Static(id="plot-region"),
+            id="plot-container"
         )
         yield Footer()
 
@@ -69,6 +89,15 @@ class CsvPlotter(App):
         """Called when the user click a file in the directory tree."""
         event.stop()
         self.csv_file = event.path
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Event handler called when a button is pressed."""
+        button_id = event.button.id
+        plot_region: Static = self.query_one("#plot-region")
+        if button_id == "button-plot":
+            input_x = self.query_one("#input-x").value
+            input_y = self.query_one("#input-y").value
+            plot_region.update(f"{input_x=} {input_y=}")
 
     def action_toggle_files(self) -> None:
         """Called in response to key binding."""
