@@ -41,3 +41,6 @@ Make a Terminal UI application for plotting data from CSVs.
       - Animation
   - Try replacing rich-pixel with [SIXEL](https://github.com/saitoha/libsixel) for higher res images.
   - Add more plotting settings/smarts.
+
+
+Hey, I also just found out someone made a terminal UI for Jupyter notebooks called [euporie](https://github.com/joouha/euporie)
