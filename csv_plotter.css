@@ -35,7 +35,7 @@ Dropdown {
 }
 
 #plot-settings {
-    height: 8;
+    height: 10;
     layout: grid;
     grid-size: 2;
 }

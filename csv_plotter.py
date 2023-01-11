@@ -47,23 +47,27 @@ class CsvPlotter(App):
         data_table: DataTable = self.query_one("DataTable")
         data_table.clear(columns=True)
 
-        try:
-            self.df = pd.read_csv(csv_file)
-        except Exception:
-            self.df = pd.DataFrame()
-
-        data_table.add_columns(*self.df.columns)
-        for row in self.df.itertuples(index=False):
-            data_table.add_row(*[str(x) for x in row])
+        plot_region: Static = self.query_one("#plot-region")
+        plot_region.update("")
 
         for i in ["#input-x", "#input-y", "#input-color"]:
             input_widget: Input = self.query_one(i)
             input_widget.value = ""
-            input_dropdown: Dropdown = self.query_one(f"{i}-dropdown")
-            input_dropdown.items = [DropdownItem(col.label.plain) for col in data_table.columns]
 
-        plot_region: Static = self.query_one("#plot-region")
-        plot_region.update("")
+        try:
+            if not csv_file:
+                self.df = pd.DataFrame()
+            else:
+                self.df = pd.read_csv(csv_file)
+                data_table.add_columns(*self.df.columns)
+                for row in self.df.itertuples(index=False):
+                    data_table.add_row(*[str(x) for x in row])
+                for i in ["#input-x", "#input-y", "#input-color"]:
+                    input_dropdown: Dropdown = self.query_one(f"{i}-dropdown")
+                    input_dropdown.items = [DropdownItem(col.label.plain) for col in data_table.columns]
+        except Exception:
+            self.df = pd.DataFrame()
+            plot_region.update(Traceback(theme="github-dark", width=None))
 
     def compose(self) -> ComposeResult:
         """Compose our UI."""
