@@ -35,5 +35,11 @@ Dropdown {
 }
 
 #plot-settings {
-    min-height: 10;
+    height: 8;
+    layout: grid;
+    grid-size: 2;
+}
+
+Horizontal {
+    min-height: 3;
 }

@@ -6,14 +6,14 @@ Run with:
     python csv_plotter.py PATH
 
 """
+import os
 import sys
 
 import pandas as pd
-import plotext as plt
 from rich.traceback import Traceback
 from textual import events
 from textual.app import App, ComposeResult
-from textual.containers import Container
+from textual.containers import Container, Horizontal
 from textual.reactive import var
 from textual.widgets import Button, DataTable, DirectoryTree, Footer, Header, Input, Static
 from textual_autocomplete import AutoComplete, Dropdown, DropdownItem
@@ -52,7 +52,7 @@ class CsvPlotter(App):
         for row in self.df.itertuples(index=False):
             data_table.add_row(*[str(x) for x in row])
 
-        for i in ["#input-x", "#input-y"]:
+        for i in ["#input-x", "#input-y", "#input-color"]:
             input_widget: Input = self.query_one(i)
             input_widget.value = ""
             input_dropdown: Dropdown = self.query_one(f"{i}-dropdown")
@@ -80,7 +80,24 @@ class CsvPlotter(App):
                     Input(placeholder="Y axis", id="input-y"),
                     Dropdown(items=[], id="input-y-dropdown")
                 ),
-                Button("Plot!", id="button-plot", variant="primary"),
+                AutoComplete(
+                    Input(placeholder="Color by", id="input-color"),
+                    Dropdown(items=[], id="input-color-dropdown")
+                ),
+                AutoComplete(
+                    Input(placeholder="Plot type", id="input-plot-type"),
+                    Dropdown(items=[
+                        DropdownItem('scatter'),
+                        DropdownItem('line'),
+                        DropdownItem('bar')
+                    ], id="input-plot-type-dropdown")
+                ),
+                Horizontal(
+                    Button("plotly!", id="button-plotly", variant="default"),
+                    Button("plotille!", id="button-plotille", variant="success"),
+                    Button("plotext!", id="button-plotext", variant="primary"),
+                    Button("clear!", id="button-clear", variant="error"),
+                ),
                 id="plot-settings",
             ),
             Static(id="plot-region"),
@@ -103,21 +120,72 @@ class CsvPlotter(App):
         button_id = event.button.id
         plot_region: Static = self.query_one("#plot-region")
         plot_region.update("")
+        plot_width = 60
+        plot_height = 35
+        renderable = ""
+
+        input_x = self.query_one("#input-x").value or None
+        input_y = self.query_one("#input-y").value or None
+        input_color = self.query_one("#input-color").value or None
+        input_plot_type = self.query_one("#input-plot-type").value or "scatter"
         
         try:
-            if button_id == "button-plot":
-                input_x = self.query_one("#input-x").value
-                input_y = self.query_one("#input-y").value
+            if button_id == "button-plotly":
+                # plotly express (or same method for any plotting library than can save to file)
+                import plotly.express as px
+                from PIL import Image
+                from rich_pixels import Pixels
+                from tempfile import TemporaryDirectory
+                input_plot_type_to_fn = {
+                    'scatter': px.scatter,
+                    'line': px.line,
+                    'bar': px.scatter
+                }
+                fig = input_plot_type_to_fn[input_plot_type](self.df, x=input_x, y=input_y, color=input_color)
+                with TemporaryDirectory() as td:
+                    fig.write_image("plot.png", width=600, height=350)
+                    renderable = Pixels.from_image_path("plot.png", resize=(plot_width, plot_height))
 
-                plt.plot_size(50, 20)
-                plt.scatter(
-                    self.df[input_x],
-                    self.df[input_y]
-                )
-                plt.xlabel(input_x)
-                plt.ylabel(input_y)
-                plot_str = plt.build()
-                plot_region.update(f"{input_x=} {input_y=}\n{plot_str}")
+            elif button_id == "button-plotille":
+                import plotille
+                fig = plotille.Figure()
+                input_plot_type_to_fn = {
+                    'scatter': fig.scatter,
+                    'line': fig.plot,
+                    'bar': fig.scatter  # not supported
+                }
+                fig.clear()
+                fig.width = plot_width
+                fig.height = plot_height
+                fig.color_mode = 'byte'
+                if input_color:
+                    for g, gdf in self.df.groupby(input_color):
+                        input_plot_type_to_fn[input_plot_type](self.df[input_x], self.df[input_y], label=g)
+                else:
+                    input_plot_type_to_fn[input_plot_type](self.df[input_x], self.df[input_y])
+
+                os.environ['FORCE_COLOR'] = '1'
+                renderable = fig.show(legend=True)
+
+            elif button_id == "button-plotext":
+                import plotext as plt
+                plt.clear_figure()
+                input_plot_type_to_fn = {
+                    'scatter': plt.scatter,
+                    'line': plt.plot,
+                    'bar': plt.bar
+                }
+
+                plt.plot_size(plot_width, plot_height)
+                if input_color:
+                    for i, (g, gdf) in enumerate(self.df.groupby(input_color)):
+                        input_plot_type_to_fn[input_plot_type](self.df[input_x], self.df[input_y], label=g, color=i % 14)
+                else:
+                    input_plot_type_to_fn[input_plot_type](self.df[input_x], self.df[input_y])
+
+                renderable = plt.build()
+
+            plot_region.update(renderable)
         except Exception:
             plot_region.update(Traceback(theme="github-dark", width=None))
             self.sub_title = "ERROR"

@@ -1,3 +1,14 @@
 textual
 textual-autocomplete
 pandas
+
+# plotly, save image to file, render with rich
+plotly
+kaleido
+rich-pixels
+
+# plotille
+plotille
+
+# plotext
+plotext
