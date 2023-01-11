@@ -143,8 +143,9 @@ class CsvPlotter(App):
                 }
                 fig = input_plot_type_to_fn[input_plot_type](self.df, x=input_x, y=input_y, color=input_color)
                 with TemporaryDirectory() as td:
-                    fig.write_image("plot.png", width=600, height=350)
-                    renderable = Pixels.from_image_path("plot.png", resize=(plot_width, plot_height))
+                    image_filepath = os.path.join(td, "plot.png")
+                    fig.write_image(image_filepath, width=600, height=350)
+                    renderable = Pixels.from_image_path(image_filepath, resize=(plot_width, plot_height))
 
             elif button_id == "button-plotille":
                 import plotille

@@ -2,6 +2,14 @@
 
 Make a Terminal UI application for plotting data from CSVs.
 
+## Run
+- Create a python environment and `pip install -r requirements.txt`
+- Run `python csv_plotter.py <root_directory>`
+
+![screenshot](screenshot.png)
+
+## About
+
 - Mainly explored the capabilities of [Textual](https://textual.textualize.io)
   - Used capabilities
     - Directory tree
@@ -10,6 +18,7 @@ Make a Terminal UI application for plotting data from CSVs.
     - Key Bindings
     - AutoComplete for inputs [textual-autocomplete](https://github.com/darrenburns/textual-autocomplete)
     - RichPixels for showing images [rich-pixels](https://github.com/darrenburns/rich-pixels)
+    - Error tracebacks from Rich
 - Tried various plotting methods to make plots, but all fail
   - [PlotlyExpress](https://plotly.com/graphing-libraries/)
     - Generate plot image file first, then render the image. Can use this method for any plotting library.
