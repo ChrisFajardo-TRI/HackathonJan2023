@@ -4,6 +4,7 @@ Make a Terminal UI application for plotting data from CSVs.
 
 ## Run
 - Create a python environment and `pip install -r requirements.txt`
+  - As of 1/10/23, rich-pixels has conflict and installs older textual. So need to also run `pip install -U textual` after.
 - Run `python csv_plotter.py <root_directory>`
 
 ![screenshot](screenshot.png)
