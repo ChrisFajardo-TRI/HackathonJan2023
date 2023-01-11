@@ -10,6 +10,7 @@ import os
 import sys
 
 import pandas as pd
+from rich.text import Text
 from rich.traceback import Traceback
 from textual import events
 from textual.app import App, ComposeResult
@@ -17,6 +18,9 @@ from textual.containers import Container, Horizontal
 from textual.reactive import var
 from textual.widgets import Button, DataTable, DirectoryTree, Footer, Header, Input, Static
 from textual_autocomplete import AutoComplete, Dropdown, DropdownItem
+
+
+
 
 
 class CsvPlotter(App):
@@ -120,8 +124,6 @@ class CsvPlotter(App):
         button_id = event.button.id
         plot_region: Static = self.query_one("#plot-region")
         plot_region.update("")
-        plot_width = 60
-        plot_height = 35
         renderable = ""
 
         input_x = self.query_one("#input-x").value or None
@@ -145,7 +147,7 @@ class CsvPlotter(App):
                 with TemporaryDirectory() as td:
                     image_filepath = os.path.join(td, "plot.png")
                     fig.write_image(image_filepath, width=600, height=350)
-                    renderable = Pixels.from_image_path(image_filepath, resize=(plot_width, plot_height))
+                    renderable = Pixels.from_image_path(image_filepath, resize=(60, 35))
 
             elif button_id == "button-plotille":
                 import plotille
@@ -156,9 +158,8 @@ class CsvPlotter(App):
                     'bar': fig.scatter  # not supported
                 }
                 fig.clear()
-                fig.width = plot_width
-                fig.height = plot_height
-                fig.color_mode = 'byte'
+                fig.width = 100
+                fig.height = 20
                 if input_color:
                     for g, gdf in self.df.groupby(input_color):
                         input_plot_type_to_fn[input_plot_type](self.df[input_x], self.df[input_y], label=g)
@@ -166,7 +167,7 @@ class CsvPlotter(App):
                     input_plot_type_to_fn[input_plot_type](self.df[input_x], self.df[input_y])
 
                 os.environ['FORCE_COLOR'] = '1'
-                renderable = fig.show(legend=True)
+                renderable = Text.from_ansi(fig.show(legend=True))
 
             elif button_id == "button-plotext":
                 import plotext as plt
@@ -177,14 +178,14 @@ class CsvPlotter(App):
                     'bar': plt.bar
                 }
 
-                plt.plot_size(plot_width, plot_height)
+                plt.plot_size(100, 20)
                 if input_color:
-                    for i, (g, gdf) in enumerate(self.df.groupby(input_color)):
-                        input_plot_type_to_fn[input_plot_type](self.df[input_x], self.df[input_y], label=g, color=i % 14)
+                    for g, gdf in self.df.groupby(input_color):
+                        input_plot_type_to_fn[input_plot_type](self.df[input_x], self.df[input_y], label=g)
                 else:
                     input_plot_type_to_fn[input_plot_type](self.df[input_x], self.df[input_y])
 
-                renderable = plt.build()
+                renderable = Text.from_ansi(plt.build())
 
             plot_region.update(renderable)
         except Exception:
