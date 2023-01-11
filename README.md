@@ -17,6 +17,7 @@ Make a Terminal UI application for plotting data from CSVs.
     - Data tables
     - Buttons
     - Key Bindings
+    - CSS Layout
     - AutoComplete for inputs [textual-autocomplete](https://github.com/darrenburns/textual-autocomplete)
     - RichPixels for showing images [rich-pixels](https://github.com/darrenburns/rich-pixels)
     - Error tracebacks from Rich
