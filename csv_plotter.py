@@ -9,6 +9,8 @@ Run with:
 import sys
 
 import pandas as pd
+import plotext as plt
+from rich.traceback import Traceback
 from textual import events
 from textual.app import App, ComposeResult
 from textual.containers import Container
@@ -36,6 +38,8 @@ class CsvPlotter(App):
         self.set_class(show_tree, "-show-tree")
 
     def watch_csv_file(self, csv_file: str) -> None:
+        self.sub_title = csv_file
+
         data_table: DataTable = self.query_one("DataTable")
         data_table.clear(columns=True)
 
@@ -53,6 +57,9 @@ class CsvPlotter(App):
             input_widget.value = ""
             input_dropdown: Dropdown = self.query_one(f"{i}-dropdown")
             input_dropdown.items = [DropdownItem(col.label.plain) for col in data_table.columns]
+
+        plot_region: Static = self.query_one("#plot-region")
+        plot_region.update("")
 
     def compose(self) -> ComposeResult:
         """Compose our UI."""
@@ -73,7 +80,8 @@ class CsvPlotter(App):
                     Input(placeholder="Y axis", id="input-y"),
                     Dropdown(items=[], id="input-y-dropdown")
                 ),
-                Button("Plot!", id="button-plot", variant="primary")
+                Button("Plot!", id="button-plot", variant="primary"),
+                id="plot-settings",
             ),
             Static(id="plot-region"),
             id="plot-container"
@@ -94,10 +102,25 @@ class CsvPlotter(App):
         """Event handler called when a button is pressed."""
         button_id = event.button.id
         plot_region: Static = self.query_one("#plot-region")
-        if button_id == "button-plot":
-            input_x = self.query_one("#input-x").value
-            input_y = self.query_one("#input-y").value
-            plot_region.update(f"{input_x=} {input_y=}")
+        plot_region.update("")
+        
+        try:
+            if button_id == "button-plot":
+                input_x = self.query_one("#input-x").value
+                input_y = self.query_one("#input-y").value
+
+                plt.plot_size(50, 20)
+                plt.scatter(
+                    self.df[input_x],
+                    self.df[input_y]
+                )
+                plt.xlabel(input_x)
+                plt.ylabel(input_y)
+                plot_str = plt.build()
+                plot_region.update(f"{input_x=} {input_y=}\n{plot_str}")
+        except Exception:
+            plot_region.update(Traceback(theme="github-dark", width=None))
+            self.sub_title = "ERROR"
 
     def action_toggle_files(self) -> None:
         """Called in response to key binding."""

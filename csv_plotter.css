@@ -33,3 +33,7 @@ AutoComplete {
 Dropdown {
     width: 100%;
 }
+
+#plot-settings {
+    min-height: 10;
+}
